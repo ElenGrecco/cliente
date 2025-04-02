@@ -210,23 +210,43 @@ ipcMain.on('new-client', async (event, client) => {
             cidadeCliente: client.cityCli,
             ufCliente: client.ufCli
         })
-        // salvar os dados do cliente no banco de dados
-        await newClient.save()
-        //confirmação de cliente adicionado no banco
-        dialog.showMessageBox({
-            type: 'info',
-            title: "Aviso",
-            message: "Cliente adicionado com sucesso",
-            buttons: ['OK']
-        }).then((result) => {
-            if (result.response === 0) {
-                event.reply('reset-form')
-            }
-        })
+         //confirmação de cliente adicionado ao banco (uso do dialog)
+    dialog.showMessageBox({
+        type: 'info',
+        title: "Aviso",
+        message: "Cliente adicionado com sucesso",
+        buttons: ['OK']
+      }).then((result) => {
+        // se o botão OK for pressionando
+        if (result.response === 0) {
+          //enviar um pedido para o renderizador limpar os campos (preload.js)
+          event.reply('reset-form')
+        }
+      })
+  
     } catch (error) {
+      // tratamento da excessão "CPF duplicado"
+      if (error.code === 11000) {
+        dialog.showMessageBox({
+          type: 'error',
+          title: "Atenção!",
+          message: "CPF já cadastrado. \nVerifique o número digitado",
+          buttons: ['OK']
+  
+        }).then((result) => {
+          // se o botão for pressionado
+          if (result.response === 0) {
+            event.reply('reset-cpf')
+            
+          }
+        })
+  
+      } else {
         console.log(error)
+      }
     }
-})
-
-// == Fim - Clientes - CRUD Create
-// ============================================================
+  })
+  
+  
+  //== Fim - CRUD Create ======================================================
+  //===========================================================================
