@@ -1,0 +1,26 @@
+{
+  "name": "cadcli",
+  "version": "1.0.0",
+  "description": "Desenvolvimento de um sistema desktop para cadastro de clientes.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ElenGrecco/cliente.git"
+  },
+  "author": "Elen Grecco",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ElenGrecco/cliente.git#issues"
+  },
+  "homepage": "https://github.com/ElenGrecco/cliente.git#readme",
+  "devDependencies": {
+    "electron": "^34.2.0"
+  },
+  "dependencies": {
+    "mongoose": "^8.12.2"
+  }
+}
