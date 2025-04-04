@@ -1,6 +1,7 @@
 console.log("Processo principal")
 
-const { app, BrowserWindow, nativeTheme, Menu, ipcMain, dialog } = require('electron')
+// shell (acessar links e aplicações externas)
+const { app, BrowserWindow, nativeTheme, Menu, ipcMain, dialog, shell } = require('electron')
 
 // Esta linha está relacionada ao preload.js
 const path = require('node:path')
@@ -10,6 +11,12 @@ const { conectar, desconectar } = require('./database.js')
 
 // Importação do Schema Clientes da camada model
 const clientModel = require('./src/models/Clientes.js')
+
+// Importação da biblioteca nativa do JS para manipular arquivos
+const fs = require('fs')
+
+// Importação do pacote jspdf (arquivos pdf) npm install jspdf
+const { jspdf, default: jsPDF } = require('jspdf')
 
 // Janela principal
 let win
@@ -125,7 +132,7 @@ const template = [
             {
                 label: 'Clientes',
                 click: () => clientWindow()
-            },            
+            },
             {
                 type: 'separator'
             },
@@ -140,8 +147,9 @@ const template = [
         label: 'Relatórios',
         submenu: [
             {
-                label: 'Clientes'
-            }            
+                label: 'Clientes',
+                click: () => relatorioClientes()
+            }
         ]
     },
     {
@@ -210,43 +218,118 @@ ipcMain.on('new-client', async (event, client) => {
             cidadeCliente: client.cityCli,
             ufCliente: client.ufCli
         })
-         //confirmação de cliente adicionado ao banco (uso do dialog)
-    dialog.showMessageBox({
-        type: 'info',
-        title: "Aviso",
-        message: "Cliente adicionado com sucesso",
-        buttons: ['OK']
-      }).then((result) => {
-        // se o botão OK for pressionando
-        if (result.response === 0) {
-          //enviar um pedido para o renderizador limpar os campos (preload.js)
-          event.reply('reset-form')
-        }
-      })
-  
-    } catch (error) {
-      // tratamento da excessão "CPF duplicado"
-      if (error.code === 11000) {
+        // salvar os dados do cliente no banco de dados
+        await newClient.save()
+        //confirmação de cliente adicionado no banco
         dialog.showMessageBox({
-          type: 'error',
-          title: "Atenção!",
-          message: "CPF já cadastrado. \nVerifique o número digitado",
-          buttons: ['OK']
-  
+            type: 'info',
+            title: "Aviso",
+            message: "Cliente adicionado com sucesso",
+            buttons: ['OK']
         }).then((result) => {
-          // se o botão for pressionado
-          if (result.response === 0) {
-            event.reply('reset-cpf')
-            
-          }
+            if (result.response === 0) {
+                event.reply('reset-form')
+            }
         })
-  
-      } else {
-        console.log(error)
-      }
+    } catch (error) {
+        //tratamento da excessão "CPF duplicado"
+        if (error.code === 11000) {
+            dialog.showMessageBox({
+                type: 'error',
+                title: "Atenção!",
+                message: "CPF já cadastrado.\nVerifique o número digitado.",
+                buttons: ['OK']
+            }).then((result) => {
+                // se o botão OK for pressionado
+                if (result.response === 0) {
+                    //Limpar o campo CPF, foco e borda em vermelho
+                }
+            })
+        } else {
+            console.log(error)
+        }
     }
-  })
-  
-  
-  //== Fim - CRUD Create ======================================================
-  //===========================================================================
+})
+
+// == Fim - Clientes - CRUD Create
+// ============================================================
+
+
+// ============================================================
+// == Relatório de clientes ===================================
+async function relatorioClientes() {
+    try {
+        // ================================================
+        //          Configuração do documento pdf
+        // ================================================
+
+        // p (portrait)  l (landscape)
+        // a4 (210 mm x 297 mm)
+        const doc = new jsPDF('p', 'mm', 'a4')
+
+        // inserir data atual no documento
+        const dataAtual = new Date().toLocaleDateString('pt-BR')
+        // doc.setFontSize() tamanho da fonte em ponto(= word)
+        doc.setFontSize(10)
+        // doc.text() escreve um texto no documento
+        doc.text(`Data: ${dataAtual}`, 170, 15) //( x,y (mm))
+        doc.setFontSize(18)
+        doc.text("Relatório de clientes", 15, 30)
+        doc.setFontSize(12)
+        let y = 50 //variável de apoio
+        //cabeçalho da tabela
+        doc.text("Nome", 14, y)
+        doc.text("Telefone", 85, y)
+        doc.text("E-mail", 130, y)
+        y += 5
+        // desenhar uma linha
+        doc.setLineWidth(0.5)
+        doc.line(10, y, 200, y) // (10 (inicio)_________ 200 (fim))
+        y += 10
+
+        // ================================================
+        //  Obter a listagem de clientes(ordem alfabética)
+        // ================================================
+
+        const clientes = await clientModel.find().sort({ nomeCliente: 1 })
+        // teste de recimento (Importante!)
+        // console.log(clientes)
+        // popular o documento pdf com os clientes cadastrados
+        clientes.forEach((c) => {
+            //Criar uma nova página se y . 280mm (A4 = 297mm)
+            if (y > 280) {
+                doc.addPage()
+                y = 20 // margem de 20mm para iniciar nova folha
+
+                doc.text("Nome", 14, y)
+                doc.text("Telefone", 85, y)
+                doc.text("E-mail", 130, y)
+                y += 5
+                // desenhar uma linha
+                doc.setLineWidth(0.5)
+                doc.line(10, y, 200, y) // (10 (inicio)_________ 200 (fim))
+                y += 10
+            }
+            doc.text(c.nomeCliente, 15, y)
+            doc.text(c.foneCliente, 85, y)
+            doc.text(c.emailCliente, 130, y)
+            y += 10
+        })
+
+        // ================================================
+        //    Abrir o arquivo pdf no sistema operacional
+        // ================================================
+
+        // Definir o caminho do arquivo temporário e nome do arquivo com extensão .pdf (importante!)
+        const tempDir = app.getPath('temp')
+        const filePath = path.join(tempDir, 'clientes.pdf')
+        // salvar temporariamente o arquivo
+        doc.save(filePath)
+        // abrir o arquivo no aplicativo padrão de leitura de pdf do computador do usuário
+        shell.openPath(filePath)
+    } catch (error) {
+        console.log(error)
+    }
+}
+// == Fim - relatório de clientes =============================
+// ============================================================
