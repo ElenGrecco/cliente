@@ -317,6 +317,17 @@ async function relatorioClientes() {
         })
 
         // ================================================
+        //    Numeração automática de páginas
+        // ================================================
+
+        const pages = doc.internal.getNumberOfPages()
+        for (let i = 1; i <= pages; i++) {
+            doc.setPage(i)
+            doc.setFontSize(10)
+            doc.text(`Página ${i} de ${pages}`, 105, 290, {align: 'center'} )
+        }
+
+        // ================================================
         //    Abrir o arquivo pdf no sistema operacional
         // ================================================
 
