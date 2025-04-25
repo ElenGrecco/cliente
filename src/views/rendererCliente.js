@@ -50,6 +50,29 @@ let cityClient = document.getElementById('inputCityClient')
 let ufClient = document.getElementById('inputUFClient')
 
 // ============================================================
+// == Manipulação do Enter ====================================
+
+function teclaEnter(event) {
+    if (event.key === "Enter") {
+        event.preventDefault() // ignorar o comportamento padrão
+        // executar o método de busca do cliente
+        searchName()
+    }
+}
+
+// "Escuta" do teclado ('keydown' = pressionar tecla)
+frmClient.addEventListener('keydown', teclaEnter)
+
+// função para restaurar o padrão (tecla Enter)
+function restaurarEnter() {
+    frmClient.removeEventListener('keydown', teclaEnter)
+}
+
+// == Fim - Manipulação do Enter ==============================
+// ============================================================
+
+
+// ============================================================
 // == CRUD Create/Update ======================================
 
 //Evento associado ao botão submit (uso das validações do html)
@@ -84,38 +107,60 @@ frmClient.addEventListener('submit', async (event) => {
 // ============================================================
 // == CRUD Read ===============================================
 
+// setar o nome do cliente para fazer um novo cadastro se a busca retornar que o cliente não está cadastrado.
+api.setName((args) => {
+    console.log("teste do IPC 'set-name'")
+    // "recortar" o nome da busca e setar no campo nome do form
+    let busca = document.getElementById('searchClient').value
+    // limpar o campo de busca (foco foi capturado de forma global)
+    foco.value = ""
+    // foco no campo nome
+    nameClient.focus()
+    // copiar o nome do cliente para o campo nome
+    nameClient.value = busca
+    // restaurar tecla Enter
+    restaurarEnter()
+})
+
 function searchName() {
     //console.log("Teste do botão Buscar")
     //capturar o nome a ser pesquisado (Passo 1)
     let cliName = document.getElementById('searchClient').value
     console.log(cliName) //teste do Passo 1
-    //enviar o nome do cliente ao Main (Passo 2)
-    api.searchName(cliName)
-    //Receber os dados do cliente (Passo 5)
-    api.renderClient((event, client) =>{
-        //teste de recebimento dos dados do cliente
-        console.log(client)
-        //Passo 6 - Renderização dos dados do cliente (preencher os inputs do form) OBS: Não esquecer de converter os dados de string para JSON
-        const clientData = JSON.parse(client)
-        arrayClient = clientData
-        // Uso do forEach para percorrer o vetor e extrair os dados
-        arrayClient.forEach((c) => {
-            nameClient.value = c.nomeCliente
-            cpfClient.value = c.cpfCliente
-            emailClient.value = c.emailCliente
-            phoneClient.value = c.foneCliente
-            cepClient.value = c.cepCliente 
-            addressClient.value = c.logradouroCliente
-            numberClient.value = c.numeroCliente
-            complementClient.value = c.complementoCliente
-            neighborhoodClient.value = c.bairroCliente
-            cityClient.value = c.cidadeCliente
-            ufClient.value = c.ufCliente
-
+    // validação de campo obrigatório
+    // se o campo de busca não foi preenchido
+    if (cliName === "") {
+        // enviar ao main um pedido para alertar o usuário
+        // precisa usar o preload.js
+        api.validateSearch()
+    } else {
+        //enviar o nome do cliente ao Main (Passo 2)
+        api.searchName(cliName)
+        //Receber os dados do cliente (Passo 5)
+        api.renderClient((event, client) => {
+            //teste de recebimento dos dados do cliente
+            console.log(client)
+            //Passo 6 - Renderização dos dados do cliente (preencher os inputs do form) OBS: Não esquecer de converter os dados de string para JSON
+            const clientData = JSON.parse(client)
+            arrayClient = clientData
+            // Uso do forEach para percorrer o vetor e extrair os dados
+            arrayClient.forEach((c) => {
+                nameClient.value = c.nomeCliente
+                cpfClient.value = c.cpfCliente
+                emailClient.value = c.emailCliente
+                phoneClient.value = c.foneCliente
+                cepClient.value = c.cepCliente
+                addressClient.value = c.logradouroCliente
+                numberClient.value = c.numeroCliente
+                complementClient.value = c.complementoCliente
+                neighborhoodClient.value = c.bairroCliente
+                cityClient.value = c.cidadeCliente
+                ufClient.value = c.ufCliente
+                // restaurar a tecla Enter
+                restaurarEnter()
+            })
         })
-    })
-
-
+    }
 }
 
 // == Fim - CRUD Read =========================================
