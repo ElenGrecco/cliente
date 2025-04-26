@@ -28,9 +28,12 @@ let arrayClient = []
 
 // Iniciar a janela de clientes alterando as propriedades de alguns elementos
 document.addEventListener('DOMContentLoaded', () => {
-    // Desativar os botões
+    // Desativar os botões editar e excluir
     btnUpdate.disabled = true
     btnDelete.disabled = true
+//Ativar o botão adicionar
+btnCreate.disabled = false
+
     // Foco na busca do cliente
     foco.focus()
 })
@@ -158,6 +161,13 @@ function searchName() {
                 ufClient.value = c.ufCliente
                 // restaurar a tecla Enter
                 restaurarEnter()
+
+                //Desativar o botão adicionar
+                btnCreate.disabled = true
+
+                //Ativar os botões Editar e Excluir
+                btnUpdate.disabled = false
+                btnDelete.disabled = false
             })
         })
     }
@@ -165,6 +175,15 @@ function searchName() {
 
 // == Fim - CRUD Read =========================================
 // ============================================================
+
+
+// ============================================================
+// Setar CPF (Corrigir o CPF)==================================
+
+api.setCpf((args) => {
+    cpfClient.focus()
+    cpfClient.value = ""
+})
 
 
 

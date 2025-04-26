@@ -22,3 +22,5 @@ api.dbStatus((event, message) => {
         document.getElementById('statusdb').src = "../public/img/dboff.png"
     }
 })
+
+
