@@ -178,11 +178,12 @@ function searchName() {
 
 
 // ============================================================
-// Setar CPF (Corrigir o CPF)==================================
+// Setar CPF (Corrigir o CPF)=================================
 
 api.setCpf((args) => {
     cpfClient.focus()
     cpfClient.value = ""
+    cpfClient.style.border = "2px solid red"
 })
 
 
