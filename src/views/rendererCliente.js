@@ -51,6 +51,8 @@ let complementClient = document.getElementById('inputComplementClient')
 let neighborhoodClient = document.getElementById('inputNeighborhoodClient')
 let cityClient = document.getElementById('inputCityClient')
 let ufClient = document.getElementById('inputUFClient')
+// Uso do ID para o delete e update
+idClient = document.getElementById('inputIdClient')
 
 // ============================================================
 // == Manipulação do Enter ====================================
@@ -83,9 +85,14 @@ frmClient.addEventListener('submit', async (event) => {
     //evitar o comportamento padrão do submit que é enviar os dados do formulário e reiniciar o documento html
     event.preventDefault()
     // Teste importante (recebimento dos dados do formuláro - passo 1 do fluxo)
-    console.log(nameClient.value, cpfClient.value, emailClient.value, phoneClient.value, cepClient.value, addressClient.value, numberClient.value, complementClient.value, neighborhoodClient.value, cityClient.value, ufClient.value)
+    //console.log(nameClient.value, cpfClient.value, emailClient.value, phoneClient.value, cepClient.value, addressClient.value, numberClient.value, complementClient.value, neighborhoodClient.value, cityClient.value, ufClient.value)
     //Criar um objeto para armazenar os dados do cliente antes de enviar ao main
-    const client = {
+    
+    // Estratégia para usar o submit para cadastrar um novo cliente ou editar os dados de um cliente já existente
+    // verificar se existe o id do cliente
+    if (idClient.value === "") {
+        // cadastrar um novo cliente
+        const client = {
         nameCli: nameClient.value,
         cpfCli: cpfClient.value,
         emailCli: emailClient.value,
@@ -98,9 +105,33 @@ frmClient.addEventListener('submit', async (event) => {
         cityCli: cityClient.value,
         ufCli: ufClient.value
     }
-    // Enviar ao main o objeto client - (Passo 2: fluxo)
-    // uso do preload.js
-    api.newClient(client)
+
+        // Enviar ao main o objeto client - (Passo 2: fluxo)
+        // uso do preload.js
+        api.newClient(client)
+    } else {
+        // alterar os dados de um cliente existente
+        // teste de validação do id
+        //console.log(idClient.value)
+        // editar um cliente existente
+        const client = {
+            idCli: idClient.value,
+            nameCli: nameClient.value,
+            cpfCli: cpfClient.value,
+            emailCli: emailClient.value,
+            phoneCli: phoneClient.value,
+            cepCli: cepClient.value,
+            addressCli: addressClient.value,
+            numberCli: numberClient.value,
+            complementCli: complementClient.value,
+            neighborhoodCli: neighborhoodClient.value,
+            cityCli: cityClient.value,
+            ufCli: ufClient.value
+        }
+        // Enviar ao main o objeto client - (Passo 2: fluxo)
+        // uso do preload.js
+        api.updateClient(client)
+    }    
 })
 
 // == Fim CRUD Create/Update ==================================
@@ -122,6 +153,15 @@ api.setName((args) => {
     // copiar o nome do cliente para o campo nome
     nameClient.value = busca
     // restaurar tecla Enter
+    restaurarEnter()
+})
+
+api.setCpf((args) => {
+    console.log("Teste do IPC 'set-cpf'")
+    let busca = document.getElementById('searchClient').value
+    foco.value = ""
+    cpfClient.focus()
+    cpfClient.value = busca.replace(/\D/g, "") // Limpa pontuação se vier com
     restaurarEnter()
 })
 
@@ -148,6 +188,7 @@ function searchName() {
             arrayClient = clientData
             // Uso do forEach para percorrer o vetor e extrair os dados
             arrayClient.forEach((c) => {
+                idClient.value = c._id
                 nameClient.value = c.nomeCliente
                 cpfClient.value = c.cpfCliente
                 emailClient.value = c.emailCliente
@@ -173,8 +214,89 @@ function searchName() {
     }
 }
 
+// Função para validar CPF
+function isValidCPF(cpf) {
+    cpf = cpf.replace(/\D/g, '')
+    if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false
+  
+    let soma = 0, resto
+    for (let i = 1; i <= 9; i++) soma += parseInt(cpf[i - 1]) * (11 - i)
+    resto = (soma * 10) % 11
+    if (resto === 10 || resto === 11) resto = 0
+    if (resto !== parseInt(cpf[9])) return false
+  
+    soma = 0
+    for (let i = 1; i <= 10; i++) soma += parseInt(cpf[i - 1]) * (12 - i)
+    resto = (soma * 10) % 11
+    if (resto === 10 || resto === 11) resto = 0
+  
+    return resto === parseInt(cpf[10])
+  }
+  
+  // Referência ao campo e mensagem de erro
+  const cpfErrorMessage = document.getElementById('cpfErrorMessage')
+  
+  // Evento input (digitação) para validar em tempo real
+  cpfClient.addEventListener('input', () => {
+    const cpf = cpfClient.value.trim().replace(/\D/g, '')
+  
+    if (cpf.length === 11) {
+      if (!isValidCPF(cpf)) {
+        cpfErrorMessage.textContent = 'CPF inválido.'
+        cpfErrorMessage.style.display = 'block'
+        cpfClient.classList.add('border', 'border-danger', 'shadow-sm')
+  
+       // setTimeout(() => {
+      //    cpfClient.value = ''
+      //    cpfClient.focus()
+      //    cpfClient.setSelectionRange(0, 0)
+      //  }, 2000)
+        return
+      }
+  
+      // CPF válido → remove erro e consulta duplicação
+      cpfErrorMessage.style.display = 'none'
+      cpfClient.classList.remove('border', 'border-danger', 'shadow-sm')
+      window.api.checkCpf(cpf)
+    }
+  })
+  
+  // Resposta do backend se o CPF já está em uso
+  window.api.cpfInUse((event, exists) => {
+    if (exists) {
+      cpfErrorMessage.textContent = 'Este CPF já está cadastrado.'
+      cpfErrorMessage.style.display = 'block'
+      cpfClient.classList.add('border', 'border-danger', 'shadow-sm')
+  
+      setTimeout(() => {
+        cpfClient.value = ''
+        cpfClient.focus()
+        cpfClient.setSelectionRange(0, 0)
+    }, 2000)
+    } else {
+      cpfErrorMessage.style.display = 'none'
+      cpfClient.classList.remove('border', 'border-danger', 'shadow-sm')
+    }
+  })
+  
+
 // == Fim - CRUD Read =========================================
 // ============================================================
+
+document.getElementById('inputIdClient').style.display = 'none';
+
+// ============================================================
+// == CRUD Delete =============================================
+
+function removeClient() {
+    //console.log(idClient.value) // teste do Passo 1
+    // Passo 2 - Envio do id para o main
+    api.deleteClient(idClient.value)
+}
+
+// == Fim - CRUD Delete =======================================
+// ============================================================
+
 
 
 // ============================================================

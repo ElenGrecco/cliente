@@ -1,5 +1,6 @@
 @charset "utf-8";
 
+
 /* Botões (tela principal) */
 .button img {
     margin: 50px 15px 25px 15px;
@@ -36,6 +37,7 @@ footer p {
     font-size: 1.2em;    
 }
 
-#setCpf {
-    border: 2px solid red;
+/* Ocultar o id do cliente */
+#inputIdClient {
+    display: none;
 }
