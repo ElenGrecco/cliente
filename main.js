@@ -443,7 +443,7 @@ ipcMain.on('check-cpf', async (event, cpf) => {
 // == CRUD Delete =============================================
 
 ipcMain.on('delete-client', async (event, id) => {
-    //console.log(id) //teste do passo 2
+    console.log(id) //teste do passo 2
     // confirmação antes de excluir
     const result = await dialog.showMessageBox(win, {
         type: 'warning',

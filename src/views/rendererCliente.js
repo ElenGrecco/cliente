@@ -165,6 +165,8 @@ api.setCpf((args) => {
     restaurarEnter()
 })
 
+
+
 function searchName() {
     //console.log("Teste do botão Buscar")
     //capturar o nome a ser pesquisado (Passo 1)
@@ -289,10 +291,12 @@ document.getElementById('inputIdClient').style.display = 'none';
 // == CRUD Delete =============================================
 
 function removeClient() {
-    //console.log(idClient.value) // teste do Passo 1
+    console.log(idClient.value) // teste do Passo 1
     // Passo 2 - Envio do id para o main
     api.deleteClient(idClient.value)
 }
+
+
 
 // == Fim - CRUD Delete =======================================
 // ============================================================
